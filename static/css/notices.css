@@ -1,0 +1,32 @@
+/* Notices pages */
+.notices-list { display: flex; flex-direction: column; gap: 12px; }
+.notice-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.notice-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.notice-card.pinned { border-left-color: var(--accent); background: #fffbeb; }
+.notice-card header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.notice-card h3 { font-size: 16px; margin: 0; }
+.notice-card h3 i { color: var(--accent); margin-right: 6px; }
+.notice-meta { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+.notice-card p { color: var(--text-soft); margin: 8px 0; }
+.notice-card footer { display: flex; gap: 8px; margin-top: 12px; }
+
+.notice-detail { padding: 28px; }
+.notice-detail h1 { font-size: 22px; margin-bottom: 8px; }
+.notice-detail .notice-meta { margin-bottom: 16px; }
+.notice-detail .notice-body { line-height: 1.7; color: var(--text); }
+.notice-detail footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }

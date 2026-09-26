@@ -1,0 +1,87 @@
+/* Dashboard page styles */
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.dashboard-greeting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    color: white;
+    padding: 24px 28px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.dashboard-greeting h1 { color: white; font-size: 22px; margin-bottom: 4px; }
+.dashboard-greeting .text-muted { color: rgba(255, 255, 255, 0.85); font-size: 13px; }
+.dashboard-greeting .quick-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dashboard-greeting .btn-outline {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+.dashboard-greeting .btn-outline:hover { background: rgba(255, 255, 255, 0.25); }
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+}
+
+.dashboard-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.dashboard-panel header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+}
+.dashboard-panel header h3 { font-size: 14px; font-weight: 600; }
+.dashboard-panel header h3 i { color: var(--primary); margin-right: 6px; }
+.dashboard-panel .panel-body { padding: 16px 20px; }
+
+.notice-list { list-style: none; padding: 0; }
+.notice-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+.notice-list li:last-child { border-bottom: 0; }
+.notice-list li.pinned { background: #fef3c7; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; }
+.notice-list a { display: block; }
+.notice-list strong { display: block; }
+.notice-list .muted { font-size: 11px; color: var(--text-muted); }
+
+.dashboard-ai-hint {
+    display: flex;
+    gap: 14px;
+    padding: 18px 24px;
+    background: var(--primary-light);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius);
+    align-items: center;
+}
+.dashboard-ai-hint .ai-icon {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.dashboard-ai-hint p { color: var(--text-soft); font-size: 13px; margin-top: 2px; }

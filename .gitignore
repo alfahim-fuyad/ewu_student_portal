@@ -25,7 +25,6 @@ ENV/
 db.sqlite3
 /media/
 /staticfiles/
-/static/
 
 # IDE
 .vscode/

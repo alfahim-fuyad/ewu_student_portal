@@ -1,0 +1,40 @@
+/* Academics pages */
+
+.dept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+}
+.dept-code {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    align-self: flex-start;
+}
+.dept-card h3 { font-size: 18px; margin-top: 4px; }
+.dept-stats {
+    display: flex;
+    gap: 14px;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 8px;
+}
+.dept-stats span { display: inline-flex; align-items: center; gap: 4px; }
+.dept-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+}

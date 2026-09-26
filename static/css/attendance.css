@@ -1,0 +1,15 @@
+/* Attendance pages */
+
+.field-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+.field-row .field { flex: 1; margin-bottom: 0; }
+.field-inline {
+    display: inline-block;
+    margin-right: 12px;
+    margin-bottom: 8px;
+}
