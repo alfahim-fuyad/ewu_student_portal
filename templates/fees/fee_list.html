@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fees{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/fees.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <div><h1>Fees</h1><p class="text-muted">{{ fees.count|default:0 }} fee records</p></div>
+        {% if request.user.is_admin_role %}
+            <div>
+                <a href="{% url 'fees:add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add fee</a>
+                <a href="{% url 'fees:history' %}" class="btn btn-outline"><i class="bi bi-clock-history"></i> History</a>
+            </div>
+        {% else %}
+            <a href="{% url 'fees:history' %}" class="btn btn-outline"><i class="bi bi-clock-history"></i> Payment history</a>
+        {% endif %}
+    </header>
+
+    {% if total_due %}
+    <div class="alert alert-warning">
+        <strong>Outstanding:</strong> {{ total_due }} across your unpaid fees.
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Student</th><th>Semester</th><th>Type</th><th>Amount</th><th>Paid</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for f in fees %}
+                <tr>
+                    <td>{{ f.student.full_name }}</td>
+                    <td>{{ f.semester }}</td>
+                    <td>{{ f.get_fee_type_display }}</td>
+                    <td>{{ f.amount }}</td>
+                    <td>{{ f.paid_amount }}</td>
+                    <td>{{ f.due_amount }}</td>
+                    <td>
+                        <span class="badge
+                            {% if f.status == 'paid' %}badge-success
+                            {% elif f.status == 'partial' %}badge-warning
+                            {% else %}badge-danger{% endif %}">{{ f.get_status_display }}</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'fees:payment' f.pk %}" class="btn btn-sm btn-outline">
+                            {% if request.user.is_admin_role %}Record{% else %}View{% endif %} payment
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="empty">No fees recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj %}
+    <div class="pager">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm btn-outline">&larr; Prev</a>{% endif %}
+        <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm btn-outline">Next &rarr;</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

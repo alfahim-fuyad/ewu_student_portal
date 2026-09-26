@@ -1,0 +1,12 @@
+{% if messages %}
+<div class="messages">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+        <span>{{ msg }}</span>
+        <button type="button" class="close" onclick="this.parentElement.remove()">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

@@ -1,0 +1,19 @@
+{% extends 'students/add.html' %}
+{% block title %}Edit {{ form.instance.full_name }}{% endblock %}
+{% block content %}
+<div class="page-wrap narrow">
+    <header class="page-head"><h1>Edit &mdash; {{ form.instance.full_name }}</h1></header>
+    <form method="post" class="card">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="field">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="error">{{ field.errors }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'students:list' %}" class="btn btn-outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}

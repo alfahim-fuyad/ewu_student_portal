@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login &mdash; Student Portal{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-wrap">
+    <div class="login-card">
+        <div class="login-left">
+            <div class="login-left-inner">
+                <div class="brand-block">
+                    <div class="brand-logo">🎓</div>
+                    <h1>University Student Portal</h1>
+                    <p>Your all-in-one academic companion — courses, results, attendance, fees, and a permission-aware AI assistant.</p>
+                </div>
+                <ul class="brand-features">
+                    <li><i class="bi bi-check-circle"></i> Attendance & GPA tracking</li>
+                    <li><i class="bi bi-check-circle"></i> Fee & notice management</li>
+                    <li><i class="bi bi-check-circle"></i> AI Assistant on every page</li>
+                </ul>
+            </div>
+        </div>
+        <div class="login-right">
+            <h2>Welcome back</h2>
+            <p class="text-muted">Sign in to your account</p>
+
+            <form method="post" class="login-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="field">
+                    <label>{{ form.username.label }}</label>
+                    {{ form.username }}
+                </div>
+                <div class="field">
+                    <label>{{ form.password.label }}</label>
+                    {{ form.password }}
+                </div>
+                <div class="login-extras">
+                    <a href="{% url 'accounts:forgot_password' %}">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+            </form>
+
+            <div class="login-hint">
+                <p>Demo accounts:</p>
+                <ul>
+                    <li>admin / admin</li>
+                    <li>teacher / teacher</li>
+                    <li>student / student</li>
+                </ul>
+                <p class="muted">Run <code>python manage.py seed_demo</code> to set these up.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/login.js' %}"></script>
+{% endblock %}

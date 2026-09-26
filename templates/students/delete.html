@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete {{ student.full_name }}?{% endblock %}
+
+{% block content %}
+<div class="page-wrap narrow">
+    <header class="page-head"><h1>Delete student?</h1></header>
+    <form method="post" class="card danger-card">
+        {% csrf_token %}
+        <p>Are you sure you want to delete the student profile for <strong>{{ student.full_name }}</strong> ({{ student.student_id }})?</p>
+        <p class="text-muted">This action cannot be undone.</p>
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a href="{% url 'students:list' %}" class="btn btn-outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}

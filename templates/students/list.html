@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Students{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/students.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <div>
+            <h1>Students</h1>
+            <p class="text-muted">{{ page_obj.total_count|default:students.count|default:0 }} students enrolled</p>
+        </div>
+        {% if request.user.is_admin_role %}
+            <a href="{% url 'students:add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add student</a>
+        {% endif %}
+    </header>
+
+    <form method="get" class="search-bar">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search by name or student ID..." class="form-control">
+        <button type="submit" class="btn btn-outline"><i class="bi bi-search"></i></button>
+    </form>
+
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Program</th>
+                    <th>Semester</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td><a href="{% url 'students:detail' s.pk %}">{{ s.student_id }}</a></td>
+                    <td>{{ s.full_name }}</td>
+                    <td>{{ s.department|default:"—" }}</td>
+                    <td>{{ s.get_program_display }}</td>
+                    <td>{{ s.current_semester|default:"—" }}</td>
+                    <td>
+                        {% if s.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}
+                    </td>
+                    <td class="actions">
+                        <a href="{% url 'students:detail' s.pk %}" class="btn btn-sm btn-outline"><i class="bi bi-eye"></i></a>
+                        {% if request.user.is_admin_role %}
+                            <a href="{% url 'students:edit' s.pk %}" class="btn btn-sm btn-outline"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'students:delete' s.pk %}" class="btn btn-sm btn-danger-outline"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="empty">No students found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj %}
+    <div class="pager">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}" class="btn btn-sm btn-outline">&larr; Prev</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ q }}" class="btn btn-sm btn-outline">Next &rarr;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+# Render web service definition — Render will use this automatically
+# https://render.com/docs/blueprint-spec
+
+# === Web service ===
+services:
+  - type: web
+    name: student-portal
+    runtime: python
+    region: singapore
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: student-portal-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false  # Set this in the Render dashboard
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: PYTHON_VERSION
+        value: 3.11.7
+
+# === Neon database ===
+databases:
+  - name: student-portal-db
+    databaseName: student_portal
+    user: student_portal_user
+    plan: free
+    region: singapore

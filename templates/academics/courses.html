@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Courses{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/academics.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <div><h1>Courses</h1><p class="text-muted">{{ courses.count|default:0 }} courses offered</p></div>
+        {% if request.user.is_admin_role %}
+            <a href="{% url 'academics:course_add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add course</a>
+        {% endif %}
+    </header>
+
+    <form method="get" class="filter-bar">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search course code or title..." class="form-control">
+        <select name="department" class="form-select">
+            <option value="">All departments</option>
+            {% for d in departments %}
+                <option value="{{ d.pk }}" {% if request.GET.department == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.code }} — {{ d.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-outline">Filter</button>
+    </form>
+
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr><th>Code</th><th>Title</th><th>Credits</th><th>Department</th><th>Instructor</th><th>Semester</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for c in courses %}
+                <tr>
+                    <td><a href="{% url 'academics:course_detail' c.pk %}">{{ c.course_code }}</a></td>
+                    <td>{{ c.title }}</td>
+                    <td>{{ c.credits }}</td>
+                    <td>{{ c.department.code }}</td>
+                    <td>{{ c.instructor|default:"TBA" }}</td>
+                    <td>{{ c.semester }}</td>
+                    <td>
+                        <a href="{% url 'academics:course_detail' c.pk %}" class="btn btn-sm btn-outline"><i class="bi bi-eye"></i></a>
+                        {% if request.user.is_admin_role %}
+                            <a href="{% url 'academics:course_edit' c.pk %}" class="btn btn-sm btn-outline"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'academics:course_delete' c.pk %}" class="btn btn-sm btn-danger-outline"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="empty">No courses yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj %}
+    <div class="pager">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&department={{ request.GET.department }}" class="btn btn-sm btn-outline">&larr; Prev</a>{% endif %}
+        <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ q }}&department={{ request.GET.department }}" class="btn btn-sm btn-outline">Next &rarr;</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

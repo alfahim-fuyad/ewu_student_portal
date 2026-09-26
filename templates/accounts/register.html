@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="page-wrap narrow">
+    <header class="page-head">
+        <h1>Create Account</h1>
+        <p class="text-muted">Sign up as a student or teacher.</p>
+    </header>
+
+    <form method="post" class="card">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="field">
+            <label>{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="error">{{ field.errors }}</div>{% endif %}
+            {% if field.help_text %}<div class="muted">{{ field.help_text }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Create account</button>
+    </form>
+</div>
+{% endblock %}

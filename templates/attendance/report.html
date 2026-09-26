@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance Report{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/attendance.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <h1>Attendance Report</h1>
+        <p class="text-muted">Per-course summary</p>
+    </header>
+
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr><th>Course</th><th>Total</th><th>Present</th><th>Late</th><th>Absent</th><th>%</th></tr>
+            </thead>
+            <tbody>
+                {% for row in summary %}
+                <tr>
+                    <td>{{ row.enrollment__course__course_code }} — {{ row.enrollment__course__title }}</td>
+                    <td>{{ row.total }}</td>
+                    <td>{{ row.present }}</td>
+                    <td>{{ row.late }}</td>
+                    <td>{{ row.absent }}</td>
+                    <td>
+                        <span class="badge
+                            {% if row.pct >= 80 %}badge-success
+                            {% elif row.pct >= 60 %}badge-warning
+                            {% else %}badge-danger{% endif %}">{{ row.pct }}%</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="empty">No data yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

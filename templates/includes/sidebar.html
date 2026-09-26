@@ -1,0 +1,122 @@
+{% load static %}
+<aside class="sidebar" id="appSidebar">
+    <nav class="sidebar-nav">
+
+        <div class="nav-section">
+            <span class="nav-label">Main</span>
+            <a href="{% url 'dashboard' %}" class="nav-link">
+                <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+            </a>
+        </div>
+
+        {% if request.user.is_authenticated %}
+
+        {% if is_admin_role %}
+        <div class="nav-section">
+            <span class="nav-label">Administration</span>
+            <a href="{% url 'students:list' %}" class="nav-link">
+                <i class="bi bi-people"></i><span>Students</span>
+            </a>
+            <a href="{% url 'teachers:list' %}" class="nav-link">
+                <i class="bi bi-person-badge"></i><span>Teachers</span>
+            </a>
+            <a href="{% url 'academics:departments' %}" class="nav-link">
+                <i class="bi bi-building"></i><span>Departments</span>
+            </a>
+            <a href="{% url 'academics:courses' %}" class="nav-link">
+                <i class="bi bi-journal-bookmark"></i><span>Courses</span>
+            </a>
+            <a href="{% url 'academics:semesters' %}" class="nav-link">
+                <i class="bi bi-calendar3"></i><span>Semesters</span>
+            </a>
+            <a href="{% url 'academics:enrollment' %}" class="nav-link">
+                <i class="bi bi-card-checklist"></i><span>Enrollment</span>
+            </a>
+            <a href="{% url 'attendance:list' %}" class="nav-link">
+                <i class="bi bi-check2-square"></i><span>Attendance</span>
+            </a>
+            <a href="{% url 'results:list' %}" class="nav-link">
+                <i class="bi bi-award"></i><span>Results</span>
+            </a>
+            <a href="{% url 'fees:list' %}" class="nav-link">
+                <i class="bi bi-cash-coin"></i><span>Fees</span>
+            </a>
+            <a href="{% url 'notices:list' %}" class="nav-link">
+                <i class="bi bi-megaphone"></i><span>Notices</span>
+            </a>
+            <a href="/admin/" class="nav-link">
+                <i class="bi bi-shield-lock"></i><span>Django Admin</span>
+            </a>
+        </div>
+        {% endif %}
+
+        {% if is_teacher %}
+        <div class="nav-section">
+            <span class="nav-label">Teacher</span>
+            <a href="{% url 'teachers:list' %}" class="nav-link">
+                <i class="bi bi-person-badge"></i><span>Faculty Directory</span>
+            </a>
+            <a href="{% url 'students:list' %}" class="nav-link">
+                <i class="bi bi-people"></i><span>Students</span>
+            </a>
+            <a href="{% url 'academics:courses' %}" class="nav-link">
+                <i class="bi bi-journal-bookmark"></i><span>Courses</span>
+            </a>
+            <a href="{% url 'attendance:list' %}" class="nav-link">
+                <i class="bi bi-check2-square"></i><span>Attendance</span>
+            </a>
+            <a href="{% url 'results:list' %}" class="nav-link">
+                <i class="bi bi-award"></i><span>Marks</span>
+            </a>
+            <a href="{% url 'notices:list' %}" class="nav-link">
+                <i class="bi bi-megaphone"></i><span>Notices</span>
+            </a>
+        </div>
+        {% endif %}
+
+        {% if is_student %}
+        <div class="nav-section">
+            <span class="nav-label">Student</span>
+            <a href="{% url 'students:my_profile' %}" class="nav-link">
+                <i class="bi bi-person-circle"></i><span>My Profile</span>
+            </a>
+            <a href="{% url 'academics:courses' %}" class="nav-link">
+                <i class="bi bi-journal-bookmark"></i><span>My Courses</span>
+            </a>
+            <a href="{% url 'academics:enrollment' %}" class="nav-link">
+                <i class="bi bi-card-checklist"></i><span>Course Registration</span>
+            </a>
+            <a href="{% url 'attendance:list' %}" class="nav-link">
+                <i class="bi bi-check2-square"></i><span>My Attendance</span>
+            </a>
+            <a href="{% url 'results:list' %}" class="nav-link">
+                <i class="bi bi-award"></i><span>My Results</span>
+            </a>
+            <a href="{% url 'results:transcript' %}" class="nav-link">
+                <i class="bi bi-file-text"></i><span>Transcript</span>
+            </a>
+            <a href="{% url 'fees:list' %}" class="nav-link">
+                <i class="bi bi-cash-coin"></i><span>Fee Status</span>
+            </a>
+            <a href="{% url 'notices:list' %}" class="nav-link">
+                <i class="bi bi-megaphone"></i><span>Notices</span>
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="nav-section">
+            <span class="nav-label">Account</span>
+            <a href="{% url 'accounts:profile' %}" class="nav-link">
+                <i class="bi bi-gear"></i><span>Profile</span>
+            </a>
+            <a href="{% url 'accounts:change_password' %}" class="nav-link">
+                <i class="bi bi-lock"></i><span>Change Password</span>
+            </a>
+            <a href="{% url 'accounts:logout' %}" class="nav-link">
+                <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+            </a>
+        </div>
+
+        {% endif %}
+    </nav>
+</aside>

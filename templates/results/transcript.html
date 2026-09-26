@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transcript — {{ student.full_name }}{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/results.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <div>
+            <h1>Academic Transcript</h1>
+            <p class="text-muted">{{ student.full_name }} &middot; {{ student.student_id }} &middot; {{ student.get_program_display }}</p>
+        </div>
+        <div>
+            <strong>CGPA:</strong>
+            <span class="cgpa-value">{{ cgpa }}</span>
+        </div>
+    </header>
+
+    {% if semesters %}
+        {% for sem in semesters %}
+        <section class="card transcript-section">
+            <header><h3>{{ sem.semester }}</h3><span>GPA: {{ sem.gpa }}</span></header>
+            <table class="table">
+                <thead><tr><th>Code</th><th>Title</th><th>Credits</th><th>Marks</th><th>Grade</th><th>Point</th></tr></thead>
+                <tbody>
+                    {% for row in sem.rows %}
+                    <tr>
+                        <td>{{ row.course.course_code }}</td>
+                        <td>{{ row.course.title }}</td>
+                        <td>{{ row.credits }}</td>
+                        <td>{{ row.marks|default:"—" }}</td>
+                        <td>{{ row.letter }}</td>
+                        <td>{{ row.point }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr><td colspan="2">Total credits</td><td>{{ sem.total_credits }}</td><td colspan="3"></td></tr>
+                </tfoot>
+            </table>
+        </section>
+        {% endfor %}
+    {% else %}
+        <p class="empty">No completed courses yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'notices/add.html' %}
+{% block title %}Edit Notice{% endblock %}
+{% block content %}
+<div class="page-wrap narrow">
+    <header class="page-head"><h1>Edit notice</h1></header>
+    <form method="post" class="card">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="field">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="error">{{ field.errors }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
+        <a href="{% url 'notices:list' %}" class="btn btn-outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}

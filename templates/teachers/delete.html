@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete {{ teacher.full_name }}?{% endblock %}
+
+{% block content %}
+<div class="page-wrap narrow">
+    <header class="page-head"><h1>Delete teacher?</h1></header>
+    <form method="post" class="card danger-card">
+        {% csrf_token %}
+        <p>Are you sure you want to delete the teacher profile for <strong>{{ teacher.full_name }}</strong>?</p>
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a href="{% url 'teachers:list' %}" class="btn btn-outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}

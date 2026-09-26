@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard &mdash; Student Portal{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+
+    <!-- Greeting -->
+    <div class="dashboard-greeting">
+        <div>
+            <h1>Hi, {{ request.user.get_full_name|default:request.user.username }} 👋</h1>
+            <p class="text-muted">
+                {% if is_student and profile %}
+                    {{ profile.student_id }} &middot; {{ profile.department|default:"No department" }} &middot; {{ profile.get_program_display }}
+                {% elif is_teacher and profile %}
+                    {{ profile.teacher_id }} &middot; {{ profile.get_designation_display }}
+                {% else %}
+                    Welcome to the Student Portal.
+                {% endif %}
+            </p>
+        </div>
+        <div class="quick-actions">
+            {% if is_admin_role %}
+                <a href="{% url 'students:add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Student</a>
+                <a href="{% url 'academics:course_add' %}" class="btn btn-outline"><i class="bi bi-journal-plus"></i> Add Course</a>
+            {% endif %}
+            {% if is_teacher %}
+                <a href="{% url 'attendance:list' %}" class="btn btn-primary"><i class="bi bi-check2-square"></i> Take Attendance</a>
+                <a href="{% url 'results:add' %}" class="btn btn-outline"><i class="bi bi-award"></i> Add Result</a>
+            {% endif %}
+            {% if is_student %}
+                <a href="{% url 'results:transcript' %}" class="btn btn-primary"><i class="bi bi-file-text"></i> View Transcript</a>
+                <a href="{% url 'fees:list' %}" class="btn btn-outline"><i class="bi bi-cash-coin"></i> View Fees</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+
+        {% if is_student %}
+            <div class="stat-card stat-cgpa">
+                <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">CGPA</span>
+                    <span class="stat-value">{{ profile.enrollments.count|default:"0" }}</span>
+                    <span class="stat-foot">
+                        {% if profile.current_semester %}{{ profile.current_semester }}{% else %}No active semester{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="stat-card stat-courses">
+                <div class="stat-icon"><i class="bi bi-journal-bookmark"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">Current Courses</span>
+                    <span class="stat-value">{{ current_courses.count|default:0 }}</span>
+                    <span class="stat-foot">This semester</span>
+                </div>
+            </div>
+            <div class="stat-card stat-attendance">
+                <div class="stat-icon"><i class="bi bi-check2-square"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">Attendance</span>
+                    <span class="stat-value">{{ attendance_pct|default:0 }}%</span>
+                    <span class="stat-foot">Overall</span>
+                </div>
+            </div>
+            <div class="stat-card stat-fees">
+                <div class="stat-icon"><i class="bi bi-cash-coin"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">Outstanding Fees</span>
+                    <span class="stat-value">{{ total_due|default:0 }}</span>
+                    <span class="stat-foot">{{ unpaid_fees|default:0 }} unpaid</span>
+                </div>
+            </div>
+        {% elif is_teacher %}
+            <div class="stat-card stat-courses">
+                <div class="stat-icon"><i class="bi bi-journal-bookmark"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">Assigned Courses</span>
+                    <span class="stat-value">{{ assigned_courses.count|default:0 }}</span>
+                    <span class="stat-foot">This semester</span>
+                </div>
+            </div>
+            <div class="stat-card stat-cgpa">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">Students</span>
+                    <span class="stat-value">{{ profile.user|default:"0" }}</span>
+                    <span class="stat-foot">Across courses</span>
+                </div>
+            </div>
+        {% elif is_admin_role %}
+            <div class="stat-card stat-courses">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">Students</span>
+                    <span class="stat-value">{{ students_count|default:"—" }}</span>
+                    <span class="stat-foot">Total</span>
+                </div>
+            </div>
+            <div class="stat-card stat-cgpa">
+                <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">Teachers</span>
+                    <span class="stat-value">{{ teachers_count|default:"—" }}</span>
+                    <span class="stat-foot">Active</span>
+                </div>
+            </div>
+            <div class="stat-card stat-attendance">
+                <div class="stat-icon"><i class="bi bi-journal-bookmark"></i></div>
+                <div class="stat-body">
+                    <span class="stat-label">Courses</span>
+                    <span class="stat-value">{{ courses_count|default:"—" }}</span>
+                    <span class="stat-foot">Offered</span>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Two-column main area -->
+    <div class="dashboard-grid">
+        <!-- Left: recent items -->
+        <section class="dashboard-panel">
+            <header><h3><i class="bi bi-megaphone"></i> Recent Notices</h3>
+                <a href="{% url 'notices:list' %}">View all</a>
+            </header>
+            <div class="panel-body">
+                {% if recent_notices %}
+                    <ul class="notice-list">
+                        {% for n in recent_notices %}
+                        <li class="{% if n.is_pinned %}pinned{% endif %}">
+                            <a href="{% url 'notices:detail' pk=n.pk %}">
+                                <strong>{{ n.title }}</strong>
+                                <span class="muted">{{ n.created_at|naturaltime }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="empty">No notices yet.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Right: academic snapshot -->
+        <section class="dashboard-panel">
+            <header><h3><i class="bi bi-journal-bookmark"></i>
+                {% if is_student %}Current Courses{% elif is_teacher %}My Courses{% else %}Quick Actions{% endif %}
+            </h3>
+                {% if is_student or is_teacher %}
+                    <a href="{% url 'academics:courses' %}">View all</a>
+                {% endif %}
+            </header>
+            <div class="panel-body">
+                {% if is_student %}
+                    {% if current_courses %}
+                        <table class="table table-sm">
+                            <thead><tr><th>Code</th><th>Title</th><th>Credits</th></tr></thead>
+                            <tbody>
+                                {% for e in current_courses %}
+                                <tr>
+                                    <td>{{ e.course.course_code }}</td>
+                                    <td>{{ e.course.title }}</td>
+                                    <td>{{ e.course.credits }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="empty">You are not enrolled in any courses this semester.</p>
+                    {% endif %}
+                {% elif is_teacher %}
+                    {% if assigned_courses %}
+                        <table class="table table-sm">
+                            <thead><tr><th>Code</th><th>Section</th><th>Room</th></tr></thead>
+                            <tbody>
+                                {% for c in assigned_courses %}
+                                <tr>
+                                    <td>{{ c.course_code }}</td>
+                                    <td>{{ c.section }}</td>
+                                    <td>{{ c.room|default:"—" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="empty">No courses assigned to you yet.</p>
+                    {% endif %}
+                {% else %}
+                    <p class="empty">Use the sidebar to navigate to the module you want to manage.</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <!-- AI hint -->
+    <div class="dashboard-ai-hint">
+        <div class="ai-icon">🤖</div>
+        <div>
+            <strong>Need help?</strong>
+            <p>Click the floating bot at the bottom-right to ask the AI Assistant about your attendance, CGPA, courses, fees, or notices.</p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

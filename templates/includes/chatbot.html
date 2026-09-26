@@ -1,0 +1,62 @@
+{# Floating AI chatbot widget included on every authenticated page. #}
+<div class="chatbot-widget" id="chatbotWidget" aria-hidden="false">
+    <!-- Floating button -->
+    <button class="chatbot-fab" id="chatbotFab" type="button" aria-label="Open AI Assistant">
+        <span class="fab-icon">🤖</span>
+        <span class="fab-pulse"></span>
+    </button>
+
+    <!-- Chat window -->
+    <div class="chatbot-window" id="chatbotWindow" hidden>
+        <div class="chatbot-header">
+            <div class="bot-info">
+                <div class="bot-avatar">🤖</div>
+                <div>
+                    <div class="bot-name">AI Assistant</div>
+                    <div class="bot-status">
+                        <span class="dot"></span>
+                        <span>Permission-aware</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chatbot-actions">
+                <button type="button" id="chatbotClear" title="Clear history" aria-label="Clear chat history">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button type="button" id="chatbotClose" title="Close" aria-label="Close chat window">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="chatbot-body" id="chatbotBody">
+            <div class="chat-welcome">
+                <p>👋 Hello! I'm your AI Student Assistant.</p>
+                <p>Ask me things like:</p>
+                <ul>
+                    <li>"What's my CGPA?"</li>
+                    <li>"My attendance?"</li>
+                    <li>"What courses am I taking?"</li>
+                    <li>"What fees do I owe?"</li>
+                    <li>"Any notices today?"</li>
+                </ul>
+                <p class="muted">🔒 I can only see YOUR data. Other students' info is off-limits.</p>
+            </div>
+        </div>
+
+        <div class="chatbot-suggestions">
+            <button class="chip" data-q="My CGPA?">My CGPA</button>
+            <button class="chip" data-q="My attendance?">Attendance</button>
+            <button class="chip" data-q="My courses?">My courses</button>
+            <button class="chip" data-q="My fees?">My fees</button>
+            <button class="chip" data-q="Notices today?">Notices</button>
+        </div>
+
+        <form class="chatbot-input" id="chatbotForm">
+            <input type="text" id="chatbotInput" placeholder="Ask anything..." autocomplete="off" required>
+            <button type="submit" id="chatbotSend" title="Send">
+                <i class="bi bi-send"></i>
+            </button>
+        </form>
+    </div>
+</div>

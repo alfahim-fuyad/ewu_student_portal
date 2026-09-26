@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/students.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <h1>My Profile</h1>
+        <p class="text-muted">Update your account information and avatar.</p>
+    </header>
+
+    <div class="profile-grid">
+        <section class="profile-card">
+            <h3>Account Information</h3>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in profile_form %}
+                    <div class="field">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<div class="error">{{ field.errors }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Save changes</button>
+            </form>
+        </section>
+
+        <section class="profile-card">
+            <h3>Profile Picture</h3>
+            <div class="avatar-preview">
+                {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" alt="avatar">
+                {% else %}
+                    <div class="avatar-placeholder">{{ request.user.username|first|upper }}</div>
+                {% endif %}
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ avatar_form.avatar }}
+                <button type="submit" class="btn btn-outline">Upload</button>
+            </form>
+
+            <h3 class="mt">Security</h3>
+            <a href="{% url 'accounts:change_password' %}" class="btn btn-outline btn-block">
+                <i class="bi bi-lock"></i> Change password
+            </a>
+        </section>
+    </div>
+</div>
+{% endblock %}

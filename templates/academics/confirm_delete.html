@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirm delete{% endblock %}
+
+{% block content %}
+<div class="page-wrap narrow">
+    <header class="page-head"><h1>Delete this item?</h1></header>
+    <form method="post" class="card danger-card">
+        {% csrf_token %}
+        <p>This will permanently delete <strong>{{ object }}</strong>.</p>
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a href="javascript:history.back()" class="btn btn-outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Fee{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/fees.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap narrow">
+    <header class="page-head"><h1>Add Fee</h1></header>
+    <form method="post" class="card">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="field">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="error">{{ field.errors }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'fees:list' %}" class="btn btn-outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}

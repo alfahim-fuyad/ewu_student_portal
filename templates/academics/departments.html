@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Departments{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/academics.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <div><h1>Departments</h1><p class="text-muted">{{ departments.count|default:0 }} active departments</p></div>
+        {% if request.user.is_admin_role %}
+            <a href="{% url 'academics:department_add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add</a>
+        {% endif %}
+    </header>
+
+    <div class="card-grid">
+        {% for d in departments %}
+        <div class="card dept-card">
+            <div class="dept-code">{{ d.code }}</div>
+            <h3>{{ d.name }}</h3>
+            <p class="text-muted small">{{ d.description|default:""|truncatechars:80 }}</p>
+            <div class="dept-stats">
+                <span><i class="bi bi-journal-bookmark"></i> {{ d.courses.count }} courses</span>
+                <span><i class="bi bi-people"></i> {{ d.students.count }} students</span>
+            </div>
+            <div class="dept-actions">
+                <a href="{% url 'academics:courses' %}?department={{ d.pk }}" class="btn btn-sm btn-outline">Courses</a>
+                {% if request.user.is_admin_role %}
+                    <a href="{% url 'academics:department_edit' d.pk %}" class="btn btn-sm btn-outline"><i class="bi bi-pencil"></i></a>
+                    <a href="{% url 'academics:department_delete' d.pk %}" class="btn btn-sm btn-danger-outline"><i class="bi bi-trash"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p class="empty">No departments yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

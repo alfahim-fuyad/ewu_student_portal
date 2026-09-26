@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load attendance_tags %}
+
+{% block title %}Take attendance — {{ course.course_code }}{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/attendance.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <h1>Take attendance</h1>
+        <p class="text-muted">{{ course.course_code }} — {{ course.title }} (Section {{ course.section }})</p>
+    </header>
+
+    <form method="post" class="card">
+        {% csrf_token %}
+
+        <div class="field-row">
+            <div class="field">
+                <label for="id_date">Date</label>
+                {{ form.date }}
+            </div>
+            {{ form.course }}
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr><th>Student</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {# Render one row per enrolled student, paired with the matching student_<pk> field #}
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td>{{ enrollment.student.full_name }} <span class="muted">({{ enrollment.student.student_id }})</span></td>
+                    <td>
+                        {% with field_name="student_"|add:enrollment.pk %}
+                            {{ form|get_field_by_name:field_name }}
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="empty">No enrolled students.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save attendance</button>
+        <a href="{% url 'attendance:list' %}" class="btn btn-outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}

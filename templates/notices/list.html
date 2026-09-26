@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Notices{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/notices.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <div><h1>Notices</h1><p class="text-muted">{{ notices.count|default:0 }} visible</p></div>
+        {% if request.user.is_admin_role or request.user.is_teacher %}
+            <a href="{% url 'notices:add' %}" class="btn btn-primary"><i class="bi bi-megaphone"></i> Post notice</a>
+        {% endif %}
+    </header>
+
+    <div class="notices-list">
+        {% for n in notices %}
+        <article class="notice-card {% if n.is_pinned %}pinned{% endif %}">
+            <header>
+                <h3>
+                    {% if n.is_pinned %}<i class="bi bi-pin-angle-fill"></i>{% endif %}
+                    <a href="{% url 'notices:detail' n.pk %}">{{ n.title }}</a>
+                </h3>
+                <div class="notice-meta">
+                    <span class="badge badge-info">{{ n.get_audience_display }}</span>
+                    <span class="muted">{{ n.created_at|naturaltime }}</span>
+                </div>
+            </header>
+            <p>{{ n.body|truncatewords:30 }}</p>
+            {% if request.user.is_admin_role or n.posted_by == request.user %}
+            <footer>
+                <a href="{% url 'notices:edit' n.pk %}" class="btn btn-sm btn-outline"><i class="bi bi-pencil"></i> Edit</a>
+                <a href="{% url 'notices:delete' n.pk %}" class="btn btn-sm btn-danger-outline"><i class="bi bi-trash"></i> Delete</a>
+            </footer>
+            {% endif %}
+        </article>
+        {% empty %}
+        <p class="empty">No notices yet.</p>
+        {% endfor %}
+    </div>
+
+    {% if page_obj %}
+    <div class="pager">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm btn-outline">&larr; Prev</a>{% endif %}
+        <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm btn-outline">Next &rarr;</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

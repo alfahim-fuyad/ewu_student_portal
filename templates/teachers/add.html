@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Teacher{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teachers.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap narrow">
+    <header class="page-head"><h1>Add Teacher</h1></header>
+    <form method="post" class="card">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="field">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="error">{{ field.errors }}</div>{% endif %}
+                {% if field.help_text %}<div class="muted">{{ field.help_text }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a href="{% url 'teachers:list' %}" class="btn btn-outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}

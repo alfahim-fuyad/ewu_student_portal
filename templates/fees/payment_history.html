@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment History{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/fees.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <h1>Payment History</h1>
+    </header>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Student</th><th>Fee type</th><th>Amount</th><th>Method</th><th>Txn ID</th><th>Date</th><th>Received by</th></tr></thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.fee.student.full_name }}</td>
+                    <td>{{ p.fee.get_fee_type_display }}</td>
+                    <td>{{ p.amount }}</td>
+                    <td>{{ p.get_method_display }}</td>
+                    <td>{{ p.transaction_id|default:"—" }}</td>
+                    <td>{{ p.paid_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ p.received_by|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="empty">No payments yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj %}
+    <div class="pager">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm btn-outline">&larr; Prev</a>{% endif %}
+        <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm btn-outline">Next &rarr;</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Results{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/results.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <header class="page-head">
+        <div><h1>Results</h1><p class="text-muted">{{ results.count|default:0 }} results published</p></div>
+        {% if request.user.is_teacher or request.user.is_admin_role %}
+            <a href="{% url 'results:add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add result</a>
+        {% endif %}
+        {% if request.user.is_student %}
+            <a href="{% url 'results:transcript' %}" class="btn btn-outline"><i class="bi bi-file-text"></i> View transcript</a>
+        {% endif %}
+    </header>
+
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Student</th><th>Course</th><th>Semester</th><th>Marks</th><th>Grade</th><th>Point</th><th>Published</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for r in results %}
+                <tr>
+                    <td>{{ r.enrollment.student.full_name }}</td>
+                    <td>{{ r.enrollment.course.course_code }}</td>
+                    <td>{{ r.enrollment.semester }}</td>
+                    <td>{{ r.marks }}</td>
+                    <td><span class="badge badge-info">{{ r.grade_letter }}</span></td>
+                    <td>{{ r.grade_point }}</td>
+                    <td>{% if r.is_published %}<span class="badge badge-success">Yes</span>{% else %}<span class="badge badge-muted">Draft</span>{% endif %}</td>
+                    <td>
+                        {% if request.user.is_teacher or request.user.is_admin_role %}
+                            <a href="{% url 'results:edit' r.pk %}" class="btn btn-sm btn-outline"><i class="bi bi-pencil"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="empty">No results yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj %}
+    <div class="pager">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm btn-outline">&larr; Prev</a>{% endif %}
+        <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm btn-outline">Next &rarr;</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
