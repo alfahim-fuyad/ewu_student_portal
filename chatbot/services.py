@@ -1,20 +1,17 @@
 """
 chatbot/services.py — the brain of the AI Assistant.
 
-This is the ONLY place that decides what data the AI is allowed to see
-and the only place that talks to the upstream AI API.
-
 Flow:
 
     User asks question
             ↓
-    services.respond(user, question)
-            ↓
-    Intent detector
+    detect_intent()
             ↓
     Permission-aware data fetcher
             ↓
-    AI API
+    Gemini AI API
+            ↓
+    If Gemini fails → Database fallback
             ↓
     Save response to ChatHistory
             ↓
@@ -26,6 +23,8 @@ from __future__ import annotations
 import json
 import re
 import logging
+import time
+
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
 from decimal import Decimal
@@ -33,8 +32,6 @@ from decimal import Decimal
 import requests
 
 from django.conf import settings
-from django.utils.timezone import now
-
 from accounts.models import User
 from chatbot.models import ChatHistory
 
@@ -50,6 +47,8 @@ INTENT_KEYWORDS: Dict[str, List[str]] = {
 
     "my_attendance": [
         "my attendance",
+        "my attend",
+        "attendance",
         "আমার attendance",
         "attendance কেমন",
         "how many class",
@@ -66,17 +65,25 @@ INTENT_KEYWORDS: Dict[str, List[str]] = {
 
     "my_fees": [
         "my fee",
+        "my fees",
         "my due",
+        "my dues",
+        "fee",
+        "fees",
+        "due",
         "আমার fee",
+        "আমার fees",
         "আমার due",
         "payment status",
         "unpaid fee",
+        "unpaid fees",
     ],
 
     "my_courses": [
         "my course",
         "my courses",
         "আমার course",
+        "আমার courses",
         "এই semester",
         "my subjects",
     ],
@@ -90,6 +97,7 @@ INTENT_KEYWORDS: Dict[str, List[str]] = {
 
     "my_notices": [
         "notice",
+        "notices",
         "announcement",
         "what is new",
         "আজকের notice",
@@ -105,6 +113,7 @@ INTENT_KEYWORDS: Dict[str, List[str]] = {
     "public_teachers": [
         "who teaches",
         "teacher",
+        "teachers",
         "faculty",
         "instructor of",
     ],
@@ -197,19 +206,28 @@ def fetch_allowed_context(
     Return only the data the user is allowed to access.
     """
 
+    # ------------------------------------------------------------------------
     # Anonymous user
+    # ------------------------------------------------------------------------
+
     if not user or not user.is_authenticated:
 
         return PermissionResult(
             allowed=True,
             intent=intent,
             context={
-                "note": "Anonymous access — public information only."
+                "note": (
+                    "Anonymous access — "
+                    "public information only."
+                )
             },
             reason="anonymous",
         )
 
+    # ------------------------------------------------------------------------
     # Student asking about another student's private information
+    # ------------------------------------------------------------------------
+
     if (
         asks_about_other_student(question)
         and user.is_student
@@ -225,6 +243,10 @@ def fetch_allowed_context(
             ),
         )
 
+    # ------------------------------------------------------------------------
+    # Student / Teacher profile
+    # ------------------------------------------------------------------------
+
     profile = (
         getattr(user, "student_profile", None)
         if user.is_student
@@ -239,6 +261,7 @@ def fetch_allowed_context(
 
     try:
 
+        # Student information
         if intent == "my_attendance" and profile:
             return _fetch_my_attendance(profile)
 
@@ -254,15 +277,18 @@ def fetch_allowed_context(
         if intent == "my_routine" and profile:
             return _fetch_my_routine(profile)
 
+        # Notices
         if intent == "my_notices":
             return _fetch_my_notices(user)
 
+        # Public information
         if intent == "public_courses":
             return _fetch_public_courses()
 
         if intent == "public_teachers":
             return _fetch_public_teachers()
 
+        # General question
         if intent == "general":
 
             return PermissionResult(
@@ -290,7 +316,9 @@ def fetch_allowed_context(
             allowed=True,
             intent=intent,
             context={
-                "note": f"Could not retrieve context: {e}"
+                "note": (
+                    "Could not retrieve context."
+                )
             },
             reason="error",
         )
@@ -332,18 +360,20 @@ def _fetch_my_attendance(profile):
     return PermissionResult(
         allowed=True,
         intent="my_attendance",
-
         context={
             "student": str(profile),
+
             "total_classes": total,
+
             "present": present,
+
             "absent": total - present,
+
             "attendance_percent": round(
                 percentage,
                 2
             ),
         },
-
         reason="own_data",
     )
 
@@ -375,22 +405,23 @@ def _fetch_my_cgpa(profile):
     return PermissionResult(
         allowed=True,
         intent="my_cgpa",
-
         context={
             "student": str(profile),
+
             "cgpa": str(cgpa),
+
             "current_semester_gpa": (
                 str(gpa)
-                if gpa
+                if gpa is not None
                 else "N/A"
             ),
+
             "current_semester": (
                 str(semester)
                 if semester
                 else "N/A"
             ),
         },
-
         reason="own_data",
     )
 
@@ -413,17 +444,19 @@ def _fetch_my_fees(profile):
 
     total_due = (
         sum(
-            fee.due_amount
-            for fee in unpaid
+            (
+                fee.due_amount
+                for fee in unpaid
+            ),
+            Decimal("0"),
         )
-        or Decimal("0")
     )
 
     return PermissionResult(
         allowed=True,
         intent="my_fees",
-
         context={
+
             "student": str(profile),
 
             "total_fees": fees.count(),
@@ -433,10 +466,17 @@ def _fetch_my_fees(profile):
             "total_due": str(total_due),
 
             "unpaid_items": [
+
                 {
                     "type": fee.get_fee_type_display(),
-                    "amount": str(fee.amount),
-                    "due": str(fee.due_amount),
+
+                    "amount": str(
+                        fee.amount
+                    ),
+
+                    "due": str(
+                        fee.due_amount
+                    ),
                 }
 
                 for fee in unpaid[:10]
@@ -470,9 +510,11 @@ def _fetch_my_courses(profile):
 
     return PermissionResult(
         allowed=True,
+
         intent="my_courses",
 
         context={
+
             "student": str(profile),
 
             "current_semester": (
@@ -530,9 +572,11 @@ def _fetch_my_routine(profile):
 
     return PermissionResult(
         allowed=True,
+
         intent="my_routine",
 
         context={
+
             "student": str(profile),
 
             "routine": [
@@ -571,13 +615,16 @@ def _fetch_my_notices(user):
 
     return PermissionResult(
         allowed=True,
+
         intent="my_notices",
 
         context={
+
             "notices": [
 
                 {
                     "title": notice.title,
+
                     "audience": (
                         notice.get_audience_display()
                     ),
@@ -616,8 +663,12 @@ def _fetch_public_courses():
 
             {
                 "code": course.course_code,
+
                 "title": course.title,
-                "credits": str(course.credits),
+
+                "credits": str(
+                    course.credits
+                ),
             }
 
             for course in Course.objects.filter(
@@ -628,6 +679,7 @@ def _fetch_public_courses():
 
     return PermissionResult(
         allowed=True,
+
         intent="public_courses",
 
         context={
@@ -657,9 +709,11 @@ def _fetch_public_teachers():
 
     return PermissionResult(
         allowed=True,
+
         intent="public_teachers",
 
         context={
+
             "teachers": [
 
                 {
@@ -685,7 +739,7 @@ def _fetch_public_teachers():
 
 
 # ============================================================================
-# OPENAI API
+# GEMINI API
 # ============================================================================
 
 def call_openai_api(
@@ -693,15 +747,17 @@ def call_openai_api(
 ) -> str:
 
     """
-    Call the configured OpenAI API.
+    Call Gemini through the OpenAI-compatible API.
 
-    This version includes safe debugging information.
-    It NEVER prints the actual API key.
+    Includes retry for temporary errors such as:
+    429, 500, 502, 503 and 504.
+
+    The actual API key is NEVER written to logs.
     """
 
-    # --------------------------------------------------------
-    # SAFE DEBUG INFORMATION
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # Safe configuration logging
+    # ------------------------------------------------------------------------
 
     log.info(
         "OpenAI config: key_exists=%s, key_length=%s, model=%s, url=%s",
@@ -717,34 +773,32 @@ def call_openai_api(
         settings.OPENAI_API_URL,
     )
 
-    # --------------------------------------------------------
-    # CHECK API KEY
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # API KEY CHECK
+    # ------------------------------------------------------------------------
 
     if not settings.OPENAI_API_KEY:
 
-        return (
-            "🤖 I understand your question. "
-            "However, no AI API key is configured. "
-            "Please configure OPENAI_API_KEY."
-        )
+        return "NO_API_KEY"
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # HEADERS
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     headers = {
         "Authorization": (
             f"Bearer {settings.OPENAI_API_KEY}"
         ),
+
         "Content-Type": "application/json",
     }
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # REQUEST DATA
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     payload = {
+
         "model": settings.OPENAI_MODEL,
 
         "messages": messages,
@@ -754,78 +808,421 @@ def call_openai_api(
         "max_tokens": 400,
     }
 
-    # --------------------------------------------------------
-    # API REQUEST
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # RETRY
+    # ------------------------------------------------------------------------
 
-    try:
+    for attempt in range(3):
 
-        response = requests.post(
-            settings.OPENAI_API_URL,
+        try:
 
-            headers=headers,
+            response = requests.post(
 
-            json=payload,
+                settings.OPENAI_API_URL,
 
-            timeout=20,
+                headers=headers,
+
+                json=payload,
+
+                timeout=20,
+            )
+
+            # ---------------------------------------------------------------
+            # HTTP ERROR
+            # ---------------------------------------------------------------
+
+            response.raise_for_status()
+
+            # ---------------------------------------------------------------
+            # JSON RESPONSE
+            # ---------------------------------------------------------------
+
+            data = response.json()
+
+            # ---------------------------------------------------------------
+            # EXTRACT ANSWER
+            # ---------------------------------------------------------------
+
+            reply = (
+                data["choices"][0]["message"]["content"]
+                .strip()
+            )
+
+            return reply
+
+        # --------------------------------------------------------------------
+        # HTTP ERROR
+        # --------------------------------------------------------------------
+
+        except requests.exceptions.HTTPError:
+
+            status = response.status_code
+
+            log.error(
+                "AI API error: status=%s body=%s",
+                status,
+                response.text[:1000],
+            )
+
+            # Temporary errors
+            if status in [
+                429,
+                500,
+                502,
+                503,
+                504,
+            ]:
+
+                if attempt < 2:
+
+                    log.warning(
+                        "Temporary AI error. "
+                        "Retrying... attempt=%s",
+                        attempt + 2,
+                    )
+
+                    time.sleep(2)
+
+                    continue
+
+            return f"API_ERROR_{status}"
+
+        # --------------------------------------------------------------------
+        # CONNECTION / OTHER ERROR
+        # --------------------------------------------------------------------
+
+        except Exception as e:
+
+            log.exception(
+                "AI API call failed: %s",
+                e,
+            )
+
+            if attempt < 2:
+
+                log.warning(
+                    "Retrying AI request..."
+                )
+
+                time.sleep(2)
+
+                continue
+
+            return "API_CONNECTION_ERROR"
+
+    return "API_CONNECTION_ERROR"
+
+
+# ============================================================================
+# DATABASE FALLBACK
+# ============================================================================
+
+def fallback_reply(
+    intent: str,
+    context: Dict[str, Any]
+) -> str:
+
+    """
+    Create a simple database-based answer when Gemini
+    is temporarily unavailable.
+
+    This makes important student information available
+    even when the AI API has a temporary problem.
+    """
+
+    # ------------------------------------------------------------------------
+    # ATTENDANCE
+    # ------------------------------------------------------------------------
+
+    if intent == "my_attendance":
+
+        return (
+            "📊 Your attendance:\n\n"
+
+            f"Student: "
+            f"{context.get('student', 'N/A')}\n"
+
+            f"Total Classes: "
+            f"{context.get('total_classes', 0)}\n"
+
+            f"Present: "
+            f"{context.get('present', 0)}\n"
+
+            f"Absent: "
+            f"{context.get('absent', 0)}\n"
+
+            f"Attendance: "
+            f"{context.get('attendance_percent', 0)}%"
         )
 
-        # Raise error for HTTP 4xx / 5xx
-        response.raise_for_status()
+    # ------------------------------------------------------------------------
+    # CGPA
+    # ------------------------------------------------------------------------
 
-        # Convert response to JSON
-        data = response.json()
+    if intent == "my_cgpa":
 
-        # Get assistant answer
+        return (
+            "📚 Your academic result:\n\n"
+
+            f"Student: "
+            f"{context.get('student', 'N/A')}\n"
+
+            f"CGPA: "
+            f"{context.get('cgpa', 'N/A')}\n"
+
+            f"Current Semester GPA: "
+            f"{context.get('current_semester_gpa', 'N/A')}\n"
+
+            f"Semester: "
+            f"{context.get('current_semester', 'N/A')}"
+        )
+
+    # ------------------------------------------------------------------------
+    # FEES
+    # ------------------------------------------------------------------------
+
+    if intent == "my_fees":
+
+        items = context.get(
+            "unpaid_items",
+            []
+        )
+
         reply = (
-            data["choices"][0]["message"]["content"]
-            .strip()
+            "💰 Your fee information:\n\n"
+
+            f"Student: "
+            f"{context.get('student', 'N/A')}\n"
+
+            f"Total Fee Records: "
+            f"{context.get('total_fees', 0)}\n"
+
+            f"Unpaid Items: "
+            f"{context.get('unpaid_count', 0)}\n"
+
+            f"Total Due: "
+            f"{context.get('total_due', '0')}\n"
         )
+
+        if items:
+
+            reply += "\nUnpaid fees:\n"
+
+            for item in items:
+
+                reply += (
+                    f"- "
+                    f"{item.get('type', 'Fee')}: "
+                    f"{item.get('due', '0')}\n"
+                )
+
+        else:
+
+            reply += (
+                "\n✅ You have no unpaid fees."
+            )
 
         return reply
 
-    # --------------------------------------------------------
-    # HTTP ERROR
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # COURSES
+    # ------------------------------------------------------------------------
 
-    except requests.exceptions.HTTPError as e:
+    if intent == "my_courses":
 
-        # IMPORTANT:
-        # We log the response body so we can see
-        # why OpenAI rejected the request.
-        #
-        # We do NOT log the API key.
-
-        log.error(
-            "OpenAI API error: status=%s body=%s",
-
-            response.status_code,
-
-            response.text[:1000],
+        courses = context.get(
+            "courses",
+            []
         )
 
-        return (
-            "🤖 The AI service returned an error. "
-            "Please try again later. "
-            f"(HTTP {response.status_code})"
+        reply = (
+            "📚 Your courses:\n\n"
+
+            f"Semester: "
+            f"{context.get('current_semester', 'N/A')}\n"
         )
 
-    # --------------------------------------------------------
-    # OTHER ERROR
-    # --------------------------------------------------------
+        if not courses:
 
-    except Exception as e:
+            return (
+                reply +
+                "\nNo enrolled courses found."
+            )
 
-        log.exception(
-            "AI API call failed: %s",
-            e,
+        for course in courses:
+
+            reply += (
+
+                f"\n• "
+                f"{course.get('code', 'N/A')} - "
+                f"{course.get('title', 'N/A')}\n"
+
+                f"  Credits: "
+                f"{course.get('credits', 'N/A')}\n"
+
+                f"  Section: "
+                f"{course.get('section', 'N/A')}\n"
+
+                f"  Instructor: "
+                f"{course.get('instructor', 'TBA')}\n"
+            )
+
+        return reply
+
+    # ------------------------------------------------------------------------
+    # ROUTINE
+    # ------------------------------------------------------------------------
+
+    if intent == "my_routine":
+
+        routine = context.get(
+            "routine",
+            []
         )
 
-        return (
-            "🤖 Sorry, I could not reach "
-            "the AI service right now. "
-            f"({type(e).__name__})"
+        if not routine:
+
+            return (
+                "📅 No routine information "
+                "was found."
+            )
+
+        reply = "📅 Your class routine:\n"
+
+        for item in routine:
+
+            reply += (
+
+                f"\n• "
+                f"{item.get('code', 'N/A')}\n"
+
+                f"  Schedule: "
+                f"{item.get('schedule', 'TBA')}\n"
+
+                f"  Room: "
+                f"{item.get('room', 'TBA')}\n"
+            )
+
+        return reply
+
+    # ------------------------------------------------------------------------
+    # NOTICES
+    # ------------------------------------------------------------------------
+
+    if intent == "my_notices":
+
+        notices = context.get(
+            "notices",
+            []
         )
+
+        if not notices:
+
+            return (
+                "📢 No notices are "
+                "currently available."
+            )
+
+        reply = "📢 Recent notices:\n"
+
+        for notice in notices:
+
+            reply += (
+
+                f"\n• "
+                f"{notice.get('title', 'Untitled')}"
+
+                f" "
+                f"({notice.get('audience', 'All')})"
+            )
+
+        return reply
+
+    # ------------------------------------------------------------------------
+    # PUBLIC COURSES
+    # ------------------------------------------------------------------------
+
+    if intent == "public_courses":
+
+        departments = context.get(
+            "departments",
+            {}
+        )
+
+        if not departments:
+
+            return (
+                "📚 No courses are "
+                "currently available."
+            )
+
+        reply = "📚 Available courses:\n"
+
+        for department, courses in departments.items():
+
+            reply += (
+                f"\n{department}:\n"
+            )
+
+            for course in courses:
+
+                reply += (
+
+                    f"• "
+                    f"{course.get('code', 'N/A')} - "
+
+                    f"{course.get('title', 'N/A')} "
+
+                    f"({course.get('credits', 'N/A')} "
+                    f"credits)\n"
+                )
+
+        return reply
+
+    # ------------------------------------------------------------------------
+    # PUBLIC TEACHERS
+    # ------------------------------------------------------------------------
+
+    if intent == "public_teachers":
+
+        teachers = context.get(
+            "teachers",
+            []
+        )
+
+        if not teachers:
+
+            return (
+                "👨‍🏫 No teacher information "
+                "is currently available."
+            )
+
+        reply = "👨‍🏫 Teachers:\n"
+
+        for teacher in teachers:
+
+            reply += (
+
+                f"\n• "
+                f"{teacher.get('name', 'N/A')}\n"
+
+                f"  Department: "
+                f"{teacher.get('department', 'N/A')}\n"
+
+                f"  Designation: "
+                f"{teacher.get('designation', 'N/A')}\n"
+            )
+
+        return reply
+
+    # ------------------------------------------------------------------------
+    # GENERAL
+    # ------------------------------------------------------------------------
+
+    return (
+        "🤖 The AI service is temporarily "
+        "unavailable. Please try again in a moment."
+    )
 
 
 # ============================================================================
@@ -866,27 +1263,32 @@ def respond(
     Main chatbot entrypoint.
     """
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # EMPTY QUESTION
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     if not question or not question.strip():
 
         return {
-            "reply": "Please type a question first.",
+
+            "reply": (
+                "Please type a question first."
+            ),
+
             "intent": "empty",
+
             "allowed": True,
         }
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # DETECT INTENT
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     intent = detect_intent(question)
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # GET ALLOWED CONTEXT
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     permission = fetch_allowed_context(
         user,
@@ -894,9 +1296,9 @@ def respond(
         intent,
     )
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # SAVE USER QUESTION
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     if user and user.is_authenticated:
 
@@ -913,6 +1315,7 @@ def respond(
             is_allowed=permission.allowed,
 
             metadata={
+
                 "reason": permission.reason,
 
                 "context_keys": list(
@@ -921,13 +1324,14 @@ def respond(
             },
         )
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # PERMISSION DENIED
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     if not permission.allowed:
 
         reply = (
+
             "🚫 I cannot share another student's "
             "private data. "
 
@@ -964,9 +1368,9 @@ def respond(
             "reason": permission.reason,
         }
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # PREPARE CONTEXT
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     context_str = json.dumps(
 
@@ -979,9 +1383,9 @@ def respond(
         indent=2,
     )
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # AI MESSAGES
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     messages = [
 
@@ -1004,15 +1408,39 @@ def respond(
         },
     ]
 
-    # --------------------------------------------------------
-    # CALL OPENAI
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # CALL GEMINI
+    # ------------------------------------------------------------------------
 
     reply = call_openai_api(messages)
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # FALLBACK IF GEMINI FAILS
+    # ------------------------------------------------------------------------
+
+    if (
+
+        reply.startswith("API_ERROR_")
+
+        or reply in [
+            "API_CONNECTION_ERROR",
+            "NO_API_KEY",
+        ]
+    ):
+
+        log.warning(
+            "Using database fallback for intent=%s",
+            intent,
+        )
+
+        reply = fallback_reply(
+            intent,
+            permission.context,
+        )
+
+    # ------------------------------------------------------------------------
     # SAVE ASSISTANT REPLY
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     if user and user.is_authenticated:
 
@@ -1029,16 +1457,19 @@ def respond(
             is_allowed=True,
 
             metadata={
+
                 "context_summary": (
+
                     permission.context
                     .get("note", "")[:80]
                 ),
+
             },
         )
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
     # RETURN RESULT
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     return {
 
@@ -1075,11 +1506,16 @@ def get_recent_history(
     )
 
     rows = (
+
         ChatHistory.objects
 
-        .filter(user=user)
+        .filter(
+            user=user
+        )
 
-        .order_by("-created_at")[:limit]
+        .order_by(
+            "-created_at"
+        )[:limit]
     )
 
     rows = rows[::-1]
@@ -1087,6 +1523,7 @@ def get_recent_history(
     return [
 
         {
+
             "role": history.role,
 
             "content": history.content,
@@ -1094,6 +1531,7 @@ def get_recent_history(
             "intent": history.intent,
 
             "ts": history.created_at.isoformat(),
+
         }
 
         for history in rows
