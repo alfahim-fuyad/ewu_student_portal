@@ -1,11 +1,49 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1d4ed8"/>
-      <stop offset="100%" stop-color="#3b82f6"/>
+    <linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#092B78"/>
+      <stop offset="55%" stop-color="#075AC7"/>
+      <stop offset="100%" stop-color="#12A8F4"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0B8FF0"/>
+      <stop offset="100%" stop-color="#10B9F4"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="url(#g)"/>
-  <text x="32" y="44" font-family="Inter, Arial" font-size="32" font-weight="700" text-anchor="middle" fill="#fff">SP</text>
+
+  <!-- Graduation cap -->
+  <path d="M180 220 L500 70 L820 220 L500 370 Z" fill="url(#blue)"/>
+  <path d="M330 250 Q500 165 670 250 L665 365 Q500 425 335 365 Z" fill="#0B3F9C"/>
+  <path d="M820 220 L820 355" stroke="#075AC7" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="820" cy="370" r="20" fill="#075AC7"/>
+  <path d="M802 388 L838 388 L850 470 L790 470 Z" fill="#0B3F9C"/>
+
+  <!-- CR7 -->
+  <text x="500" y="620" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="285"
+        font-weight="900" font-style="italic" letter-spacing="-22"
+        fill="url(#blue)">CR7</text>
+
+  <!-- Student portal -->
+  <text x="500" y="715" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="76"
+        font-weight="700" letter-spacing="-2">
+    <tspan fill="#0B347F">student_</tspan><tspan fill="#079CF1">portal</tspan>
+  </text>
+
+  <!-- Open book -->
+  <path d="M500 825
+           C430 760 330 755 210 790
+           L150 850
+           C290 815 400 825 500 900
+           C600 825 710 815 850 850
+           L790 790
+           C670 755 570 760 500 825 Z"
+        fill="url(#cyan)"/>
+  <path d="M500 900 C400 825 290 815 150 850
+           L190 895 C315 865 410 875 500 945
+           C590 875 685 865 810 895
+           L850 850 C710 815 600 825 500 900 Z"
+        fill="#083B91"/>
+  <path d="M500 825 L500 945" stroke="#fff" stroke-width="10" opacity=".9"/>
 </svg>
